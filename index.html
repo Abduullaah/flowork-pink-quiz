@@ -61,6 +61,21 @@ h2{font-size:clamp(26px,5.2vw,42px);line-height:1.22}
 .score small{font-size:.35em;color:var(--petal)}
 .foot{position:absolute;left:0;right:0;bottom:calc(14px + env(safe-area-inset-bottom,0px));text-align:center;font-size:12px;letter-spacing:.2em;text-transform:uppercase;color:var(--petal);opacity:.7}
 @media (max-width:520px){body{font-size:16px}.screen{padding-block:28px 56px;gap:20px;justify-content:flex-start;padding-top:max(28px,6vh)}.opt{font-size:17px;padding:15px 16px;gap:14px;border-radius:14px}.opt b{width:28px;height:28px;font-size:12px}.opts{gap:10px}.lede{font-size:17px}.btn{padding:18px 44px;font-size:17px}.foot{position:static;padding-bottom:16px}}
+.pop{position:fixed;inset:0;display:grid;place-items:center;padding:24px;background:rgba(74,16,40,.55);
+  -webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);opacity:0;pointer-events:none;transition:opacity .45s ease;z-index:10}
+.pop.on{opacity:1;pointer-events:auto}
+.card{background:var(--petal);color:var(--rose-deep);border-radius:28px;padding:40px 32px 32px;width:min(100%,400px);text-align:center;
+  display:flex;flex-direction:column;align-items:center;gap:14px;box-shadow:0 30px 60px rgba(60,10,30,.35);
+  transform:scale(.85) translateY(20px);transition:transform .6s cubic-bezier(.2,1.4,.4,1)}
+.pop.on .card{transform:none}
+.card .heart{font-size:0;width:64px;height:64px;animation:beat 1.6s ease-in-out infinite}
+.card .eyebrow{color:var(--rose)}
+.card h1{color:var(--rose-deep);font-size:clamp(32px,8vw,44px)}
+.card p{margin:0;font-size:17px;line-height:1.5;color:var(--rose)}
+.card .btn{background:var(--rose-deep);color:var(--white);margin-top:8px}
+@keyframes beat{0%,100%{transform:scale(1)}15%{transform:scale(1.12)}30%{transform:scale(1)}45%{transform:scale(1.08)}}
+.spark{position:fixed;width:10px;height:10px;border-radius:50%;pointer-events:none;z-index:11;animation:fall linear forwards}
+@keyframes fall{to{transform:translateY(105vh) rotate(540deg);opacity:.2}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 
@@ -96,11 +111,21 @@ h2{font-size:clamp(26px,5.2vw,42px);line-height:1.22}
   <p class="foot">Breast Cancer Awareness Month</p>
 </div>
 
+<div class="pop" id="pop" role="dialog" aria-modal="true" aria-labelledby="popTitle">
+  <div class="card">
+    <svg class="heart" viewBox="0 0 40 60" aria-hidden="true"><path fill="none" stroke="#A9406A" stroke-width="5" stroke-linecap="round" d="M8 56 L27 24 C33 14 30 4 20 4 C10 4 7 14 13 24 L32 56"/></svg>
+    <p class="eyebrow">15 / 15 &middot; Perfect</p>
+    <h1 id="popTitle">Now pick your card</h1>
+    <p>You got every question right. Show this to a flowork team member and choose your card.</p>
+    <button class="btn" id="popClose">Yay!</button>
+  </div>
+</div>
+
 <script>
 /* ================= EDIT HERE =================
    PASS_MARK: correct answers needed to win (placeholder until confirmed).
    Each question: q = text, a = 4 options, c = index of the correct option (0 = first). */
-const PASS_MARK = 12;
+const PASS_MARK = 15;
 const QUESTIONS = [
   {q:"How many private offices are there at flowork Vision Tower?", a:["40","60","85","120"], c:1},
   {q:"How many private offices are there at flowork Dubai Hills?", a:["30","45","70","95"], c:2},
@@ -161,12 +186,31 @@ function finish(){
   $("bar").style.width = "100%";
   const win = right >= PASS_MARK;
   $("score").innerHTML = right + "<small> / " + N + "</small>";
-  $("verdict").textContent = win ? "You win!" : "Thank you for playing";
+  $("verdict").textContent = win ? "Perfect score!" : "Thank you for playing";
   $("note").textContent = win
-    ? "Show this screen to a flowork team member to collect your prize."
+    ? "Now pick your card. Show this screen to a flowork team member."
     : "You needed " + PASS_MARK + " correct answers to win. Thank you for joining us in pink.";
   show("end");
+  if (win) setTimeout(celebrate, 700);
 }
+
+function celebrate(){
+  $("pop").classList.add("on");
+  if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  const cols = ["#FFB6CE","#FFFFFF","#FFE3EC","#F28AB0"];
+  for (let n = 0; n < 40; n++){
+    const d = document.createElement("i");
+    d.className = "spark";
+    d.style.left = Math.random()*100 + "vw";
+    d.style.top = (-10 - Math.random()*20) + "vh";
+    d.style.background = cols[n % 4];
+    d.style.animationDuration = (2.5 + Math.random()*2) + "s";
+    d.style.animationDelay = (Math.random()*0.8) + "s";
+    document.body.appendChild(d);
+    setTimeout(() => d.remove(), 5500);
+  }
+}
+$("popClose").onclick = () => $("pop").classList.remove("on");
 
 function start(){
   i = 0; right = 0; busy = false;
